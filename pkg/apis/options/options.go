@@ -81,6 +81,7 @@ type Options struct {
 	SetXAuthRequest               bool          `flag:"set-xauthrequest" cfg:"set_xauthrequest"`
 	SetAuthorization              bool          `flag:"set-authorization-header" cfg:"set_authorization_header"`
 	PassAuthorization             bool          `flag:"pass-authorization-header" cfg:"pass_authorization_header"`
+	PassAccessTokenAuthorization  bool          `flag:"pass-access-token-authorization-header" cfg:"pass_access_token_authorization_header"`
 	SkipAuthPreflight             bool          `flag:"skip-auth-preflight" cfg:"skip_auth_preflight"`
 	FlushInterval                 time.Duration `flag:"flush-interval" cfg:"flush_interval"`
 
@@ -208,6 +209,7 @@ func NewFlagSet() *pflag.FlagSet {
 	flagSet.Bool("pass-user-headers", true, "pass X-Forwarded-User and X-Forwarded-Email information to upstream")
 	flagSet.String("basic-auth-password", "", "the password to set when passing the HTTP Basic Auth header")
 	flagSet.Bool("pass-access-token", false, "pass OAuth access_token to upstream via X-Forwarded-Access-Token header")
+	flagSet.Bool("pass-access-token-authorization-header", false, "pass OAuth access_token to upstream via Authorization header")
 	flagSet.Bool("pass-host-header", true, "pass the request Host Header to upstream")
 	flagSet.Bool("pass-authorization-header", false, "pass the Authorization Header to upstream")
 	flagSet.Bool("set-authorization-header", false, "set Authorization response headers (useful in Nginx auth_request mode)")

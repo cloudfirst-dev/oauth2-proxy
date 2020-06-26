@@ -88,35 +88,36 @@ type OAuthProxy struct {
 	AuthOnlyPath      string
 	UserInfoPath      string
 
-	redirectURL          *url.URL // the url to receive requests at
-	whitelistDomains     []string
-	provider             providers.Provider
-	providerNameOverride string
-	sessionStore         sessionsapi.SessionStore
-	ProxyPrefix          string
-	SignInMessage        string
-	HtpasswdFile         *HtpasswdFile
-	DisplayHtpasswdForm  bool
-	serveMux             http.Handler
-	SetXAuthRequest      bool
-	PassBasicAuth        bool
-	SetBasicAuth         bool
-	SkipProviderButton   bool
-	PassUserHeaders      bool
-	BasicAuthPassword    string
-	PassAccessToken      bool
-	SetAuthorization     bool
-	PassAuthorization    bool
-	PreferEmailToUser    bool
-	skipAuthRegex        []string
-	skipAuthPreflight    bool
-	skipJwtBearerTokens  bool
-	jwtBearerVerifiers   []*oidc.IDTokenVerifier
-	compiledRegex        []*regexp.Regexp
-	templates            *template.Template
-	realClientIPParser   ipapi.RealClientIPParser
-	Banner               string
-	Footer               string
+	redirectURL                  *url.URL // the url to receive requests at
+	whitelistDomains             []string
+	provider                     providers.Provider
+	providerNameOverride         string
+	sessionStore                 sessionsapi.SessionStore
+	ProxyPrefix                  string
+	SignInMessage                string
+	HtpasswdFile                 *HtpasswdFile
+	DisplayHtpasswdForm          bool
+	serveMux                     http.Handler
+	SetXAuthRequest              bool
+	PassBasicAuth                bool
+	SetBasicAuth                 bool
+	SkipProviderButton           bool
+	PassUserHeaders              bool
+	BasicAuthPassword            string
+	PassAccessToken              bool
+	SetAuthorization             bool
+	PassAuthorization            bool
+	PassAccessTokenAuthorization bool
+	PreferEmailToUser            bool
+	skipAuthRegex                []string
+	skipAuthPreflight            bool
+	skipJwtBearerTokens          bool
+	jwtBearerVerifiers           []*oidc.IDTokenVerifier
+	compiledRegex                []*regexp.Regexp
+	templates                    *template.Template
+	realClientIPParser           ipapi.RealClientIPParser
+	Banner                       string
+	Footer                       string
 }
 
 // UpstreamProxy represents an upstream server to proxy to
@@ -317,32 +318,33 @@ func NewOAuthProxy(opts *options.Options, validator func(string) bool) *OAuthPro
 		AuthOnlyPath:      fmt.Sprintf("%s/auth", opts.ProxyPrefix),
 		UserInfoPath:      fmt.Sprintf("%s/userinfo", opts.ProxyPrefix),
 
-		ProxyPrefix:          opts.ProxyPrefix,
-		provider:             opts.GetProvider(),
-		providerNameOverride: opts.ProviderName,
-		sessionStore:         opts.GetSessionStore(),
-		serveMux:             serveMux,
-		redirectURL:          redirectURL,
-		whitelistDomains:     opts.WhitelistDomains,
-		skipAuthRegex:        opts.SkipAuthRegex,
-		skipAuthPreflight:    opts.SkipAuthPreflight,
-		skipJwtBearerTokens:  opts.SkipJwtBearerTokens,
-		jwtBearerVerifiers:   opts.GetJWTBearerVerifiers(),
-		compiledRegex:        opts.GetCompiledRegex(),
-		realClientIPParser:   opts.GetRealClientIPParser(),
-		SetXAuthRequest:      opts.SetXAuthRequest,
-		PassBasicAuth:        opts.PassBasicAuth,
-		SetBasicAuth:         opts.SetBasicAuth,
-		PassUserHeaders:      opts.PassUserHeaders,
-		BasicAuthPassword:    opts.BasicAuthPassword,
-		PassAccessToken:      opts.PassAccessToken,
-		SetAuthorization:     opts.SetAuthorization,
-		PassAuthorization:    opts.PassAuthorization,
-		PreferEmailToUser:    opts.PreferEmailToUser,
-		SkipProviderButton:   opts.SkipProviderButton,
-		templates:            loadTemplates(opts.CustomTemplatesDir),
-		Banner:               opts.Banner,
-		Footer:               opts.Footer,
+		ProxyPrefix:                  opts.ProxyPrefix,
+		provider:                     opts.GetProvider(),
+		providerNameOverride:         opts.ProviderName,
+		sessionStore:                 opts.GetSessionStore(),
+		serveMux:                     serveMux,
+		redirectURL:                  redirectURL,
+		whitelistDomains:             opts.WhitelistDomains,
+		skipAuthRegex:                opts.SkipAuthRegex,
+		skipAuthPreflight:            opts.SkipAuthPreflight,
+		skipJwtBearerTokens:          opts.SkipJwtBearerTokens,
+		jwtBearerVerifiers:           opts.GetJWTBearerVerifiers(),
+		compiledRegex:                opts.GetCompiledRegex(),
+		realClientIPParser:           opts.GetRealClientIPParser(),
+		SetXAuthRequest:              opts.SetXAuthRequest,
+		PassBasicAuth:                opts.PassBasicAuth,
+		SetBasicAuth:                 opts.SetBasicAuth,
+		PassUserHeaders:              opts.PassUserHeaders,
+		BasicAuthPassword:            opts.BasicAuthPassword,
+		PassAccessToken:              opts.PassAccessToken,
+		SetAuthorization:             opts.SetAuthorization,
+		PassAuthorization:            opts.PassAuthorization,
+		PassAccessTokenAuthorization: opts.PassAccessTokenAuthorization,
+		PreferEmailToUser:            opts.PreferEmailToUser,
+		SkipProviderButton:           opts.SkipProviderButton,
+		templates:                    loadTemplates(opts.CustomTemplatesDir),
+		Banner:                       opts.Banner,
+		Footer:                       opts.Footer,
 	}
 }
 
@@ -1052,6 +1054,13 @@ func (p *OAuthProxy) addHeadersForProxying(rw http.ResponseWriter, req *http.Req
 	if p.PassAuthorization {
 		if session.IDToken != "" {
 			req.Header["Authorization"] = []string{fmt.Sprintf("Bearer %s", session.IDToken)}
+		} else {
+			req.Header.Del("Authorization")
+		}
+	}
+	if p.PassAccessTokenAuthorization {
+		if session.AccessToken != "" {
+			req.Header["Authorization"] = []string{fmt.Sprintf("Bearer %s", session.AccessToken)}
 		} else {
 			req.Header.Del("Authorization")
 		}
